@@ -1,46 +1,29 @@
-import sys
-sys.path.insert(0, '/home/bate/Develop/glsl_taichi')
-import taichi as ti
-import taichi_glsl as tl
+from afx import *
+from ray import *
+from hit import *
 
 
-V = lambda *_: tl.vec(*_).cast(float)
-V3 = lambda *_: tl.vec3(*_).cast(float)
-V2 = lambda *_: tl.vec2(*_).cast(float)
+class Scene(tl.DataOriented):
+    def __init__(self):
+        self.objs = Sphere.field(32)
 
-
-class Ray(tl.TaichiClass):
-    @property
-    def org(self):
-        return self.entries[0]
-
-    @property
-    def dir(self):
-        return self.entries[1]
-
-    @property
-    def coord(self):
-        return self.entries[2]
-
-    @property
-    def color(self):
-        return self.entries[3]
-
-    @classmethod
-    def _field(cls, *_, **__):
-        org = ti.Vector.field(3, float, *_, **__)
-        dir = ti.Vector.field(3, float, *_, **__)
-        coord = ti.Vector.field(2, int, *_, **__)
-        color = ti.Vector.field(3, float, *_, **__)
-        return org, dir, coord, color
+        @ti.materialize_callback
+        @ti.kernel
+        def init_objs():
+            for i in self.objs:
+                self.objs[i] = Sphere(tl.randNDRange(V3(-1), V3(1)), 0.1)
 
     @ti.func
-    def is_dead(self):
-        return all(self.dir == 0)
+    def intersect(self, r):
+        ret = Hit.empty()
+        for i in range(self.objs.shape[0]):
+            h = self.objs[i].intersect(r)
+            ret = ret.union(h)
+        return ret
 
 
 class Engine(tl.DataOriented):
-    def __init__(self, res=512, nsamps=4):
+    def __init__(self, scene, res=512, nsamps=4):
         if isinstance(res, int):
             res = res, res
         nrays = res[0] * res[1] * nsamps
@@ -52,12 +35,14 @@ class Engine(tl.DataOriented):
         self.image = ti.Vector.field(3, float, res)
         self.count = ti.field(int, res)
 
+        self.scene = scene
+
     @ti.kernel
     def load(self):
         for I in ti.grouped(self.image):
-            uv = I / self.res
-            org = V(0, 0, -2)
-            dir = V(uv, 1).normalized()
+            uv = (I + tl.randND(2)) / self.res * 2 - 1
+            org = V(0, 0, -3)
+            dir = V(uv, 2).normalized()
             color = V(1, 1, 1)
 
             r = Ray(org, dir, I, color)
@@ -66,7 +51,11 @@ class Engine(tl.DataOriented):
 
     @ti.func
     def transmit(self, r):
-        r.color *= r.dir
+        h = self.scene.intersect(r)
+        if not h.is_hit():
+            r.color = 0
+        else:
+            r.color *= h.nrm
         return r
 
     @ti.kernel
@@ -96,5 +85,6 @@ class Engine(tl.DataOriented):
         ti.imshow(self.image)
 
 
-e = Engine()
+s = Scene()
+e = Engine(s)
 e.main()
