@@ -10,7 +10,7 @@ class SphereScene(tl.DataOriented):
         @ti.kernel
         def init_objs():
             for i in self.objs:
-                self.objs[i] = Sphere(tl.randNDRange(V3(-1), V3(1)), 0.1)
+                self.objs[i] = Sphere(tl.randNDRange(V3(-1), V3(1)), 0.2)
 
     @ti.func
     def intersect(self, r):
@@ -25,8 +25,8 @@ class SimpleShader(tl.DataOriented):
     @ti.func
     def fallback(self, r):
         t = 0.5 * r.dir.y + 0.5
-        blue = V(0.5, 0.7, 1.0)
-        white = V3(1.0, 1.0, 1.0)
+        blue = V(0.0, 0.0, 0.0)#0.5, 0.7, 1.0)
+        white = V(1.0, 1.0, 1.0)
         return (1 - t) * white + t * blue
 
     @ti.func

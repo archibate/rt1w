@@ -42,30 +42,36 @@ class Engine(tl.DataOriented):
     def step(self):
         for i in self.rays:
             r = self.rays[i]
-            r = self.transmit(r)
-            self.rays[i] = r
+            if not r.is_dead():
+                r = self.transmit(r)
+                self.rays[i] = r
 
     @ti.kernel
     def back(self):
         for i in self.rays:
             r = self.rays[i]
-            self.count[r.coord] += 1
-            self.image[r.coord] += r.color
+            if r.is_dead():
+                self.count[r.coord] += 1
+                self.image[r.coord] += r.color
 
     @ti.kernel
     def normalize_image(self):
         for I in ti.grouped(self.image):
             self.image[I] /= self.count[I]
 
-    def main(self):
-        self.load()
-        self.step()
-        self.step()
-        self.back()
+    def main(self, ntimes=16, nsteps=3):
+        for t in range(ntimes):
+            self.load()
+            print(f'\rRendering {100 * t / ntimes:4.01f}%...', end='')
+            for s in range(nsteps):
+                self.step()
+            self.back()
+        print('done')
         self.normalize_image()
         ti.imshow(self.image)
 
 
+ti.init(ti.opengl)
 s = SphereScene()
 t = SimpleShader()
 e = Engine(s, t)
