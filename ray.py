@@ -10,5 +10,9 @@ class Ray(tl.TaichiClass):
     ]
 
     @ti.func
+    def kill(self):
+        self.dir = 0
+
+    @ti.func
     def is_dead(self):
         return all(self.dir == 0)

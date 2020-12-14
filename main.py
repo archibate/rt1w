@@ -1,29 +1,11 @@
 from afx import *
 from ray import *
 from hit import *
-
-
-class Scene(tl.DataOriented):
-    def __init__(self):
-        self.objs = Sphere.field(32)
-
-        @ti.materialize_callback
-        @ti.kernel
-        def init_objs():
-            for i in self.objs:
-                self.objs[i] = Sphere(tl.randNDRange(V3(-1), V3(1)), 0.1)
-
-    @ti.func
-    def intersect(self, r):
-        ret = Hit.empty()
-        for i in range(self.objs.shape[0]):
-            h = self.objs[i].intersect(r)
-            ret = ret.union(h)
-        return ret
+from sce import *
 
 
 class Engine(tl.DataOriented):
-    def __init__(self, scene, res=512, nsamps=4):
+    def __init__(self, scene, shader, res=512, nsamps=4):
         if isinstance(res, int):
             res = res, res
         nrays = res[0] * res[1] * nsamps
@@ -36,6 +18,7 @@ class Engine(tl.DataOriented):
         self.count = ti.field(int, res)
 
         self.scene = scene
+        self.shader = shader
 
     @ti.kernel
     def load(self):
@@ -52,10 +35,7 @@ class Engine(tl.DataOriented):
     @ti.func
     def transmit(self, r):
         h = self.scene.intersect(r)
-        if not h.is_hit():
-            r.color = 0
-        else:
-            r.color *= h.nrm
+        r = self.shader.transmit(r, h)
         return r
 
     @ti.kernel
@@ -80,11 +60,13 @@ class Engine(tl.DataOriented):
     def main(self):
         self.load()
         self.step()
+        self.step()
         self.back()
         self.normalize_image()
         ti.imshow(self.image)
 
 
-s = Scene()
-e = Engine(s)
+s = SphereScene()
+t = SimpleShader()
+e = Engine(s, t)
 e.main()
