@@ -95,7 +95,7 @@ class Triangle(tl.TaichiClass):
                     t *= det
                     u *= det
                     v *= det
-                    inrm = e1.cross(e2).normalized()
+                    inrm = e2.cross(e1).normalized()
                     ipos = ro + t * rd
                     itex = V(u, v)
 

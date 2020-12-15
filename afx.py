@@ -1,4 +1,5 @@
 __import__('sys').path.insert(0, '/home/bate/Develop/glsl_taichi')
+__import__('sys').path.insert(0, 'external')
 
 import numpy as np
 import taichi as ti
@@ -6,31 +7,31 @@ import taichi_glsl as tl
 ts = tl
 
 
-V = lambda *_: tl.vec(*_).cast(float)
-V3 = lambda *_: tl.vec3(*_).cast(float)
-V2 = lambda *_: tl.vec2(*_).cast(float)
+V = lambda *_: tl.vec(*_).cast(float) if ti.impl.inside_kernel() else tl.vec(*_)
+V3 = lambda *_: tl.vec3(*_).cast(float) if ti.impl.inside_kernel() else tl.vec3(*_)
+V2 = lambda *_: tl.vec2(*_).cast(float) if ti.impl.inside_kernel() else tl.vec2(*_)
 
 
 EPS = 1e-6
 INF = 1e6
 
 
-@ti.func
+@ti.pyfunc
 def tangent(Z):
-    Y = V(0, 1, 0)
-    X = Z.cross(Y).normalized()
-    Y = X.cross(Z)
-    return ti.Matrix.cols([X, Y, Z])
+    Y = V(0, 1, 0) if any(abs(Z.xz) >= 1e-2) else V(1, 0, 0) if any(abs(Z.yz) >= 1e-2) else V(0, 0, 1)
+    X = Y.cross(Z).normalized()
+    Y = Z.cross(X)
+    return ti.Matrix([X.entries, Y.entries, Z.entries]).transpose()
 
 
-@ti.func
+@ti.pyfunc
 def spherical(h, phi):
     unit = V(ti.cos(phi * ti.tau), ti.sin(phi * ti.tau))
     dir = V3(ti.sqrt(1 - h**2) * unit, h)
     return dir
 
 
-@ti.func
+@ti.pyfunc
 def unspherical(dir):
     phi = ti.atan2(dir.y, dir.x) / ti.tau
     return dir.z, phi

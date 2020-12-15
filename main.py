@@ -26,8 +26,8 @@ class Engine(tl.DataOriented):
     def load(self):
         for I in ti.grouped(self.image):
             u, v = (I + tl.randND(2)) / self.res * 2 - 1
-            org = V(0, -9, 0)
-            dir = V(u, 3, v).normalized()
+            org = V(0, -10, 0)
+            dir = V(u, 4, v).normalized()
             color = V(1, 1, 1)
 
             r = Ray(org, dir, I, color)
@@ -52,49 +52,41 @@ class Engine(tl.DataOriented):
     def back(self):
         for i in self.rays:
             r = self.rays[i]
-            if r.is_dead():
-                self.count[r.coord] += 1
-                self.image[r.coord] += r.color
-            #else:
-            #    self.count[r.coord] += 1
-            #    self.image[r.coord] += V(1, 0, 1)
+            if not r.is_dead():
+                r.color = 0
+            self.count[r.coord] += 1
+            cnt = self.count[r.coord]
+            old = self.image[r.coord]
+            self.image[r.coord] = (old * (cnt - 1) + r.color) / cnt
 
-    @ti.kernel
-    def normalize_image(self):
-        for I in ti.grouped(self.image):
-            clr = V(1, 0, 1)
-            if self.count[I] != 0:
-                clr = self.image[I] / self.count[I]
-            self.image[I] = clr#aces_tonemap(clr)
-
-    def main(self, ntimes=2, nsteps=6):
+    def main(self, ntimes=12, nsteps=8):
         with ezprof.scope('build'):
             self.scene.build_tree()
-        for t in range(ntimes):
+        gui = ti.GUI('path', self.image.shape)
+        while gui.running:
+            if gui.get_event(gui.ESCAPE):
+                gui.running = False
             with ezprof.scope('time'):
                 self.load()
-                print(f'\rRendering {100 * t / ntimes:4.01f}%...', end='')
                 for s in range(nsteps):
                     self.step()
                 self.back()
-        print('done')
-        with ezprof.scope('norm'):
-            self.normalize_image()
-            img = self.image.to_numpy()
+            gui.set_image(aces_tonemap(self.image.to_numpy()))
+            gui.show()
+        gui.close()
         ezprof.show()
-        ti.imshow(img)
 
 
 if __name__ == '__main__':
     from ldr import readobj, objverts, objmtlids
 
-    ti.init(ti.cpu, cpu_max_num_threads=1)
-    #ti.init(ti.cuda)
+    #ti.init(ti.cpu, cpu_max_num_threads=1)
+    ti.init(ti.cuda)
 
     if 0:
         scene = SphereScene(2)
     else:
-        obj = readobj('/home/bate/Develop/three_taichi/assets/cornell.obj')
+        obj = readobj('assets/cornell.obj')
         obj['v'][:, 2] -= 2
         verts = objverts(obj)
         mids = objmtlids(obj)

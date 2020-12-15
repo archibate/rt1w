@@ -8,6 +8,7 @@ class SimpleShader(tl.DataOriented):
         blue = V(0.5, 0.7, 1.0)
         white = V(1.0, 1.0, 1.0)
         ret = (1 - t) * white + t * blue
+        ret = 0.1
         return ret
 
     @ti.func
@@ -21,18 +22,28 @@ class SimpleShader(tl.DataOriented):
 
     @ti.func
     def _transmit(self, r, h):
+        r.dir = r.dir.normalized()
+        if r.dir.dot(h.nrm) > 0:
+            h.nrm = -h.nrm
+        
         r.org += r.dir * h.depth
 
-        rspec = tl.reflect(r.dir, h.nrm)
+        rspec = tl.reflect(-r.dir, h.nrm)
         rdiff = tangent(h.nrm) @ spherical(ti.random(), ti.random())
 
-        ke = 0.0
-        kd = 1.0
-
-        r.dir = tl.normalize((1 - kd) * rspec + kd * rdiff)
+        if h.id == 1:
+            r.color *= V(1, .7, .5)
+            r.dir = rspec
+        elif h.id == 2:
+            if h.pos.x >= 2 - EPS:
+                r.color *= V(.6, 0, 1)
+            if h.pos.x <= EPS - 2:
+                r.color *= V(1, 0, .6)
+            r.dir = rdiff
+        elif h.id == 3:
+            r.color *= 18
+            r.kill()
+        
         r.org += h.nrm * EPS * 2
-
-        r.color *= abs(V(h.id == 1, h.id == 2, h.id == 3))
-        r.kill()
 
         return r
