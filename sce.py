@@ -11,21 +11,24 @@ class SphereScene(tl.DataOriented):
         @ti.kernel
         def init_objs():
             for i in self.objs:
-                self.objs[i] = Sphere(tl.randNDRange(V3(-1), V3(1)), 0.2, i)
+                self.objs[i] = Sphere(tl.randNDRange(V3(-1), V3(1)), 0.2, i + 1)
             self.objs[0] = Sphere(V(0, +0.5, 0), 1)
             self.objs[1] = Sphere(V(0, -1e2-0.5, 0), 1e2)
 
-        #self.tree = Octree()
+        self.tree = Octree() if ti.cfg.arch == ti.cpu else None
 
     def build_tree(self):
-        pass#self.tree.build(self)
+        if self.tree is not None:
+            self.tree.build(self)
 
-    @ti.func
-    def tintersect(self, r):
-        return self.tree.intersect(self, r)
-
-    @ti.func
     def intersect(self, r):
+        if self.tree is not None:
+            return self.tree.intersect(self, r)
+        else:
+            return self.slow_intersect(r)
+
+    @ti.func
+    def slow_intersect(self, r):
         ret = Hit.empty()
         for i in range(self.objs.shape[0]):
             h = self.objs[i].intersect(r)
@@ -34,7 +37,7 @@ class SphereScene(tl.DataOriented):
 
 
 class MeshScene(tl.DataOriented):
-    def __init__(self, verts):
+    def __init__(self, verts, mids=None):
         self.objs = Triangle.field(len(verts))
 
         @ti.materialize_callback
@@ -42,19 +45,23 @@ class MeshScene(tl.DataOriented):
             self.objs.v0.from_numpy(verts[:, 0])
             self.objs.v1.from_numpy(verts[:, 1])
             self.objs.v2.from_numpy(verts[:, 2])
-            self.objs.id.from_numpy(np.arange(len(verts)))
+            if mids is not None:
+                self.objs.id.from_numpy(mids)
 
-        self.tree = Octree()
+        self.tree = Octree() if ti.cfg.arch == ti.cpu else None
 
     def build_tree(self):
-        self.tree.build(self)
+        if self.tree is not None:
+            self.tree.build(self)
 
-    @ti.func
     def intersect(self, r):
-        return self.tree.intersect(self, r)
+        if self.tree is not None:
+            return self.tree.intersect(self, r)
+        else:
+            return self.slow_intersect(r)
 
     @ti.func
-    def aintersect(self, r):
+    def slow_intersect(self, r):
         ret = Hit.empty()
         for i in range(self.objs.shape[0]):
             h = self.objs[i].intersect(r)

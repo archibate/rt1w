@@ -25,9 +25,9 @@ class Engine(tl.DataOriented):
     @ti.kernel
     def load(self):
         for I in ti.grouped(self.image):
-            uv = (I + tl.randND(2)) / self.res * 2 - 1
-            org = V(0, 0, 3)
-            dir = V(uv, -2).normalized()
+            u, v = (I + tl.randND(2)) / self.res * 2 - 1
+            org = V(0, -9, 0)
+            dir = V(u, 3, v).normalized()
             color = V(1, 1, 1)
 
             r = Ray(org, dir, I, color)
@@ -67,7 +67,7 @@ class Engine(tl.DataOriented):
                 clr = self.image[I] / self.count[I]
             self.image[I] = clr#aces_tonemap(clr)
 
-    def main(self, ntimes=128, nsteps=6):
+    def main(self, ntimes=2, nsteps=6):
         with ezprof.scope('build'):
             self.scene.build_tree()
         for t in range(ntimes):
@@ -86,17 +86,19 @@ class Engine(tl.DataOriented):
 
 
 if __name__ == '__main__':
-    from assimp import readobj
+    from ldr import readobj, objverts, objmtlids
 
-    #ti.init(ti.cpu, cpu_max_num_threads=1)
-    ti.init(ti.cuda)
+    ti.init(ti.cpu, cpu_max_num_threads=1)
+    #ti.init(ti.cuda)
 
-    if 1:
+    if 0:
         scene = SphereScene(2)
     else:
-        obj = readobj('/home/bate/Develop/three_taichi/assets/monkey.obj')
-        verts = obj['v'][obj['f'][:, :, 0]]
-        scene = MeshScene(verts)
+        obj = readobj('/home/bate/Develop/three_taichi/assets/cornell.obj')
+        obj['v'][:, 2] -= 2
+        verts = objverts(obj)
+        mids = objmtlids(obj)
+        scene = MeshScene(verts, mids)
 
     shader = SimpleShader()
     engine = Engine(scene, shader)

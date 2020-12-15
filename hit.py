@@ -12,7 +12,7 @@ class Hit(tl.TaichiClass):
 
     @classmethod
     def empty(cls):
-        return cls(INF, V3(0), V3(0), V2(0), -1)
+        return cls(INF, V3(0), V3(0), V2(0), 0)
 
     @ti.func
     def union(self, other):

@@ -93,7 +93,7 @@ class Octree(tl.DataOriented):
     @ti.kernel
     def build(self, scene: ti.template()):
         self.count[None] = 0
-        self.alloc(V3(0), 2, 0)
+        self.alloc(V3(0), 4, 0)
         for i in range(scene.objs.shape[0]):
             obj = scene.objs[i]
             bmin, bmax = obj.to_bound()

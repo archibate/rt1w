@@ -156,6 +156,18 @@ def objmtlids(obj):
     return mids
 
 
+def objverts(obj):
+    return obj['v'][obj['f'][:, :, 0]]
+
+
+def objcoors(obj):
+    return obj['vt'][obj['f'][:, :, 1]]
+
+
+def objnorms(obj):
+    return obj['vn'][obj['f'][:, :, 2]]
+
+
 def objautoscale(obj):
     obj['v'] -= np.average(obj['v'], axis=0)
     obj['v'] /= np.max(np.abs(obj['v']))
