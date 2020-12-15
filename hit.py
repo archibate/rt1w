@@ -49,6 +49,12 @@ class Sphere(tl.TaichiClass):
         tex = V(0., 0.)
         return Hit(t, pos, nrm, tex)
 
+    @ti.func
+    def to_bound(self):
+        bmin = self.pos - self.radius
+        bmax = self.pos + self.radius
+        return bmin, bmax
+
 
 class Triangle(tl.TaichiClass):
     taichi_class = [
@@ -91,3 +97,9 @@ class Triangle(tl.TaichiClass):
                     itex = V(u, v)
 
         return Hit(t, ipos, inrm, itex)
+
+    @ti.func
+    def to_bound(self):
+        bmin = min(self.v0, self.v1, self.v2)
+        bmax = max(self.v0, self.v1, self.v2)
+        return bmin, bmax

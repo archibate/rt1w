@@ -59,7 +59,7 @@ class Engine(tl.DataOriented):
         for I in ti.grouped(self.image):
             self.image[I] /= self.count[I]
 
-    def main(self, ntimes=16, nsteps=3):
+    def main(self, ntimes=1, nsteps=3):
         for t in range(ntimes):
             self.load()
             print(f'\rRendering {100 * t / ntimes:4.01f}%...', end='')
@@ -71,8 +71,9 @@ class Engine(tl.DataOriented):
         ti.imshow(self.image)
 
 
-ti.init(ti.opengl)
+ti.init(ti.cpu)
 s = SphereScene()
 t = SimpleShader()
 e = Engine(s, t)
+s.build_tree()
 e.main()

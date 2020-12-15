@@ -1,5 +1,6 @@
 from afx import *
 from hit import *
+from tre import *
 
 
 class SphereScene(tl.DataOriented):
@@ -12,8 +13,17 @@ class SphereScene(tl.DataOriented):
             for i in self.objs:
                 self.objs[i] = Sphere(tl.randNDRange(V3(-1), V3(1)), 0.2)
 
+        self.tree = Octree()
+
+    def build_tree(self):
+        self.tree.build(self)
+
     @ti.func
     def intersect(self, r):
+        return self.tree.intersect(self, r)
+
+    @ti.func
+    def aintersect(self, r):
         ret = Hit.empty()
         for i in range(self.objs.shape[0]):
             h = self.objs[i].intersect(r)
