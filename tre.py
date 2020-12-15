@@ -3,33 +3,26 @@ from ray import *
 from hit import *
 
 
-class Array(tl.DataOriented):
-    is_taichi_class = True
-
-    @classmethod
-    def field(cls, *args, shape):
-        if isinstance(shape, int):
-            shape = (shape,)
-        shape = tuple(shape) + 8
-        return cls(*args, shape)
-
-    class Proxy(tl.DataOriented):
-        is_taichi_class = True
-
-        def __init__(self, parent, I):
-            self.parent = parent
-            self.I = I
-
-        @ti.func
-        def subscript(self, I):
-            self.parent[self.I, I]
-
-        def assign(self, rhs):
-            assert rhs is None
+class Stack(tl.DataOriented):
+    def __init__(self, func, *args):
+        self.buf = func(*args)
+        self.len = ti.field(int, ())
 
     @ti.func
     def subscript(self, I):
-        return self.Proxy(self, I)
+        return self.buf[I]
+
+    @ti.func
+    def push(self, val):
+        self.buf[ti.atomic_add(self.size(), 1)] = val
+
+    @ti.func
+    def pop(self):
+        return self.buf[ti.atomic_sub(self.size(), 1) - 1]
+
+    @ti.func
+    def size(self):
+        return self.len[None]
 
 
 
@@ -46,6 +39,8 @@ class Octree(tl.DataOriented):
         ti.root.dense(ti.i, N).dynamic(ti.j, NE).place(self.elems)
         ti.root.dense(ti.i, N).dense(ti.j, 8).place(self.children)
         ti.root.dense(ti.i, N).place(self.parent)
+
+        self.global_stack = Stack(ti.field, int, 1024)
 
     @ti.func
     def to_bound(self, i):
@@ -88,7 +83,6 @@ class Octree(tl.DataOriented):
                 pos = self.center[cur] + (half if coor != 0 else -half)
                 self.children[cur, lo] = self.alloc(pos, half, cur)
             cur = self.children[cur, lo]
-        print('dept', cur)
         ti.append(self.elems.parent(), [cur], id)
         return cur
 
@@ -104,10 +98,16 @@ class Octree(tl.DataOriented):
 
     @ti.func
     def walk(self, r):
-        cur = 0
-        for e in range(ti.length(self.elems.parent(), [cur])):
-            i = self.elems[cur, e]
-            yield i
+        stack = ti.static(self.global_stack)
+        stack.push(0)
+        while stack.size():
+            cur = stack.pop()
+            for c in range(8):
+                if self.children[cur, c] != 0:
+                    stack.push(self.children[cur, c])
+            for e in range(ti.length(self.elems.parent(), [cur])):
+                i = self.elems[cur, e]
+                yield i
 
     @ti.func
     def intersect(self, scene: ti.template(), r):

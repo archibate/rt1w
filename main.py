@@ -71,7 +71,7 @@ class Engine(tl.DataOriented):
         ti.imshow(self.image)
 
 
-ti.init(ti.cpu)
+ti.init(ti.cpu, cpu_max_num_threads=1, print_preprocessed=True)
 s = SphereScene()
 t = SimpleShader()
 e = Engine(s, t)
