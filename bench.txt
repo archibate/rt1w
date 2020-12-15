@@ -1,0 +1,64 @@
+[Taichi] mode=release
+[Taichi] preparing sandbox at /tmp/taichi-b3w0pe_z
+[Taichi] version 0.7.8, llvm 10.0.0, commit 1ce69651, linux, python 3.8.5
+[TaiGLSL] version 0.0.10
+[Tai3D] version 0.0.5
+[Tai3D] Inputs are welcomed at https://github.com/taichi-dev/taichi_three
+[Tai3D] Camera control hints: LMB to orbit, MMB to move, RMB to scale
+[Taichi] Starting on arch=x64
+[Taichi] materializing...
+Rendering 75.0%...done
+  min   |   avg   |   max   |  num  |  total  |    name
+ 9.463s |  9.660s |   10.0s |    4x |   38.6s | time
+78.12ms | 78.12ms | 78.12ms |    1x | 78.12ms | norm
+
+请按 ENTER 或其它命令继续
+[Taichi] mode=release
+[Taichi] preparing sandbox at /tmp/taichi-33kw_e4c
+[Taichi] version 0.7.8, llvm 10.0.0, commit 1ce69651, linux, python 3.8.5
+[TaiGLSL] version 0.0.10
+[Tai3D] version 0.0.5
+[Tai3D] Inputs are welcomed at https://github.com/taichi-dev/taichi_three
+[Tai3D] Camera control hints: LMB to orbit, MMB to move, RMB to scale
+[Taichi] Starting on arch=x64
+[Taichi] materializing...
+Rendering 75.0%...done
+  min   |   avg   |   max   |  num  |  total  |    name
+ 6.428s |  6.518s |  6.783s |    4x |   26.1s | time
+78.11ms | 78.11ms | 78.11ms |    1x | 78.11ms | norm
+
+请按 ENTER 或其它命令继续
+[Taichi] mode=release
+[Taichi] preparing sandbox at /tmp/taichi-rgh1u2vk
+[Taichi] version 0.7.8, llvm 10.0.0, commit 1ce69651, linux, python 3.8.5
+[TaiGLSL] version 0.0.10
+[Tai3D] version 0.0.5
+[Tai3D] Inputs are welcomed at https://github.com/taichi-dev/taichi_three
+[Tai3D] Camera control hints: LMB to orbit, MMB to move, RMB to scale
+[Taichi] Starting on arch=x64
+[Taichi] materializing...
+Rendering 75.0%...done
+  min   |   avg   |   max   |  num  |  total  |    name
+ 2.678s |  2.819s |  3.237s |    4x |   11.3s | time
+ 0.854s |  0.854s |  0.854s |    1x |  0.854s | build
+80.65ms | 80.65ms | 80.65ms |    1x | 80.65ms | norm
+
+请按 ENTER 或其它命令继续
+(master) [bate@archit rt1w]$ exit
+
+[Taichi] mode=release
+[Taichi] preparing sandbox at /tmp/taichi-slxzulsq
+[Taichi] version 0.7.8, llvm 10.0.0, commit 1ce69651, linux, python 3.8.5
+[TaiGLSL] version 0.0.10
+[Tai3D] version 0.0.5
+[Tai3D] Inputs are welcomed at https://github.com/taichi-dev/taichi_three
+[Tai3D] Camera control hints: LMB to orbit, MMB to move, RMB to scale
+[Taichi] Starting on arch=x64
+[Taichi] materializing...
+Rendering 75.0%...done
+  min   |   avg   |   max   |  num  |  total  |    name
+ 2.216s |  2.367s |  2.808s |    4x |  9.470s | time
+ 0.854s |  0.854s |  0.854s |    1x |  0.854s | build
+79.47ms | 79.47ms | 79.47ms |    1x | 79.47ms | norm
+
+请按 ENTER 或其它命令继续

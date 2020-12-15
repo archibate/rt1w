@@ -30,6 +30,33 @@ class SphereScene(tl.DataOriented):
             ret = ret.union(h)
         return ret
 
+class MeshScene(tl.DataOriented):
+    def __init__(self, verts):
+        self.objs = Triangle.field(len(verts))
+
+        @ti.materialize_callback
+        def init_objs():
+            self.objs.v0.from_numpy(verts[:, 0])
+            self.objs.v1.from_numpy(verts[:, 1])
+            self.objs.v2.from_numpy(verts[:, 2])
+
+        self.tree = Octree()
+
+    def build_tree(self):
+        self.tree.build(self)
+
+    @ti.func
+    def intersect(self, r):
+        return self.tree.intersect(self, r)
+
+    @ti.func
+    def aintersect(self, r):
+        ret = Hit.empty()
+        for i in range(self.objs.shape[0]):
+            h = self.objs[i].intersect(r)
+            ret = ret.union(h)
+        return ret
+
 
 class SimpleShader(tl.DataOriented):
     @ti.func

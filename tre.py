@@ -27,7 +27,7 @@ class Stack(tl.DataOriented):
 
 
 class Octree(tl.DataOriented):
-    def __init__(self, N=1024, NE=32):
+    def __init__(self, N=2**16, NE=2**12):
         self.center = ti.Vector.field(3, float)
         self.size = ti.field(float)
         self.elems = ti.field(int)
@@ -44,13 +44,15 @@ class Octree(tl.DataOriented):
 
     @ti.func
     def to_bound(self, i):
-        bmin = self.center[i] - self.radius[i]
-        bmax = self.center[i] + self.radius[i]
+        bmin = self.center[i] - self.size[i]
+        bmax = self.center[i] + self.size[i]
         return bmin, bmax
 
     @ti.func
     def hit_bound(self, i, r):
-        return Sphere(self.center[i], self.size[i]).intersect(r).is_hit()
+        bmin, bmax = self.to_bound(i)
+        return aabb_hit(bmin, bmax, r)
+        #return Sphere(self.center[i], self.size[i] * 1.8).intersect(r).is_hit()
 
     @ti.func
     def alloc(self, center, size, parent):
@@ -77,12 +79,14 @@ class Octree(tl.DataOriented):
             hi = self.child(cur, bmax)
             if lo != hi:
                 break
+            # lock [cur]
             if self.children[cur, lo] == 0:
                 half = self.size[cur] / 2
                 coor = V(lo % 2, lo // 2 % 2, lo // 4)
                 pos = self.center[cur] + (half if coor != 0 else -half)
                 self.children[cur, lo] = self.alloc(pos, half, cur)
             cur = self.children[cur, lo]
+            # unlock [cur]
         ti.append(self.elems.parent(), [cur], id)
         return cur
 
@@ -90,11 +94,10 @@ class Octree(tl.DataOriented):
     def build(self, scene: ti.template()):
         self.count[None] = 0
         self.alloc(V3(0), 2, 0)
-        for _ in range(1):
-            for i in range(scene.objs.shape[0]):
-                obj = scene.objs[i]
-                bmin, bmax = obj.to_bound()
-                self.insert(bmin, bmax, i)
+        for i in range(scene.objs.shape[0]):
+            obj = scene.objs[i]
+            bmin, bmax = obj.to_bound()
+            self.insert(bmin, bmax, i)
 
     @ti.func
     def walk(self, r):
@@ -102,12 +105,13 @@ class Octree(tl.DataOriented):
         stack.push(0)
         while stack.size():
             cur = stack.pop()
+            if not self.hit_bound(cur, r):
+                continue
             for c in range(8):
                 if self.children[cur, c] != 0:
                     stack.push(self.children[cur, c])
             for e in range(ti.length(self.elems.parent(), [cur])):
-                i = self.elems[cur, e]
-                yield i
+                yield self.elems[cur, e]
 
     @ti.func
     def intersect(self, scene: ti.template(), r):

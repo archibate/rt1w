@@ -103,3 +103,26 @@ class Triangle(tl.TaichiClass):
         bmin = min(self.v0, self.v1, self.v2)
         bmax = max(self.v0, self.v1, self.v2)
         return bmin, bmax
+
+
+@ti.func
+def aabb_hit(bmin, bmax, r):
+    near = -INF
+    far = INF
+    hit = 1
+
+    for i in ti.static(range(3)):
+        if abs(r.dir[i]) < EPS:
+            if r.org[i] < bmin[i] or r.org[i] > bmax[i]:
+                hit = 0
+        else:
+            i1 = (bmin[i] - r.org[i]) / r.dir[i]
+            i2 = (bmax[i] - r.org[i]) / r.dir[i]
+
+            far = min(far, max(i1, i2))
+            near = max(near, min(i1, i2))
+
+    if near > far:
+        hit = 0
+
+    return hit
