@@ -33,13 +33,19 @@ class SimpleShader(tl.DataOriented):
 
         if h.id == 1:
             r.color *= V(1, .7, .5)
-            r.dir = rspec
-        elif h.id == 2:
+            r.dir = (rspec + 0.06 * rdiff).normalized()
+
+        elif h.id == 2:          
+            #if ti.random() >= 0.0:
+            #    lipos = V(0, 0, 2)
+            #    r.color *= (lipos - r.org).normalized() * 0.5 + 0.5
+            
             if h.pos.x >= 2 - EPS:
                 r.color *= V(.6, 0, 1)
             if h.pos.x <= EPS - 2:
                 r.color *= V(1, 0, .6)
             r.dir = rdiff
+
         elif h.id == 3:
             r.color *= 18
             r.kill()
