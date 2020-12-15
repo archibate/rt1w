@@ -7,11 +7,12 @@ class Hit(tl.TaichiClass):
             ('pos', ti.Vector.field, 3, float),
             ('nrm', ti.Vector.field, 3, float),
             ('tex', ti.Vector.field, 2, float),
+            ('id', ti.field, int),
     ]
 
     @classmethod
     def empty(cls):
-        return cls(INF, V3(0), V3(0), V2(0))
+        return cls(INF, V3(0), V3(0), V2(0), -1)
 
     @ti.func
     def union(self, other):
@@ -29,6 +30,7 @@ class Sphere(tl.TaichiClass):
     taichi_class = [
             ('pos', ti.Vector.field, 3, float),
             ('radius', ti.field, float),
+            ('id', ti.field, int),
     ]
 
     @ti.func
@@ -47,7 +49,7 @@ class Sphere(tl.TaichiClass):
         pos = r.org + t * r.dir
         nrm = (pos - self.pos).normalized()
         tex = V(0., 0.)
-        return Hit(t, pos, nrm, tex)
+        return Hit(t, pos, nrm, tex, self.id)
 
     @ti.func
     def to_bound(self):
@@ -61,6 +63,7 @@ class Triangle(tl.TaichiClass):
             ('v0', ti.Vector.field, 3, float),
             ('v1', ti.Vector.field, 3, float),
             ('v2', ti.Vector.field, 3, float),
+            ('id', ti.field, int),
     ]
 
     @ti.func
@@ -96,7 +99,7 @@ class Triangle(tl.TaichiClass):
                     ipos = ro + t * rd
                     itex = V(u, v)
 
-        return Hit(t, ipos, inrm, itex)
+        return Hit(t, ipos, inrm, itex, self.id)
 
     @ti.func
     def to_bound(self):

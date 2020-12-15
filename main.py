@@ -2,6 +2,7 @@ from afx import *
 from ray import *
 from hit import *
 from sce import *
+from sha import *
 import ezprof
 
 
@@ -54,13 +55,19 @@ class Engine(tl.DataOriented):
             if r.is_dead():
                 self.count[r.coord] += 1
                 self.image[r.coord] += r.color
+            #else:
+            #    self.count[r.coord] += 1
+            #    self.image[r.coord] += V(1, 0, 1)
 
     @ti.kernel
     def normalize_image(self):
         for I in ti.grouped(self.image):
-            self.image[I] /= self.count[I]
+            clr = V(1, 0, 1)
+            if self.count[I] != 0:
+                clr = self.image[I] / self.count[I]
+            self.image[I] = clr#aces_tonemap(clr)
 
-    def main(self, ntimes=4, nsteps=3):
+    def main(self, ntimes=128, nsteps=6):
         with ezprof.scope('build'):
             self.scene.build_tree()
         for t in range(ntimes):
@@ -78,12 +85,19 @@ class Engine(tl.DataOriented):
         ti.imshow(img)
 
 
-from taichi_three import readobj
-obj = readobj('/home/bate/Develop/three_taichi/assets/monkey.obj')
-verts = obj['vp'][obj['f'][:, :, 0]]
+if __name__ == '__main__':
+    from assimp import readobj
 
-ti.init(ti.cpu, cpu_max_num_threads=1)
-s = MeshScene(verts)
-t = SimpleShader()
-e = Engine(s, t)
-e.main()
+    #ti.init(ti.cpu, cpu_max_num_threads=1)
+    ti.init(ti.cuda)
+
+    if 1:
+        scene = SphereScene(2)
+    else:
+        obj = readobj('/home/bate/Develop/three_taichi/assets/monkey.obj')
+        verts = obj['v'][obj['f'][:, :, 0]]
+        scene = MeshScene(verts)
+
+    shader = SimpleShader()
+    engine = Engine(scene, shader)
+    engine.main()
